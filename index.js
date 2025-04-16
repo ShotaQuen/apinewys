@@ -12,6 +12,12 @@ app.use(cors());
 app.use(secure);
 const port = 3000;
 
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname,  'index.html'));
+});
+
 app.get('/stats', (req, res) => {
   const stats = {
     platform: os.platform(),
