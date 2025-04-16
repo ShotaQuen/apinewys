@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- start: Icons -->
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<!-- start: Icons -->
+<!-- start: CSS -->
+<link rel="stylesheet" href="./assets/css/bootstrap.min.css">
+<link rel="stylesheet" href="./assets/css/style.css">
+<!-- end: CSS -->
+<title>IkannNew</title>
+</head>
+
+<body>
+
+<!-- start: Sidebar -->
+<div class="sidebar position-fixed top-0 bottom-0 bg-white border-end">
+<div class="d-flex align-items-center p-3">
+<a href="#" class="sidebar-logo text-uppercase fw-bold text-decoration-none text-indigo fs-4">Ikann</a>
+<i class="sidebar-toggle ri-arrow-left-circle-line ms-auto fs-5 d-none d-md-block"></i>
+</div>
+<ul class="sidebar-menu p-3 m-0 mb-0">
+<li class="sidebar-menu-item active">
+<a href="#">
+<i class="ri-dashboard-line sidebar-menu-item-icon"></i>
+Dashboard
+</a>
+</li>
+<li class="sidebar-menu-divider mt-3 mb-1 text-uppercase">Api</li>
+<li class="sidebar-menu-item has-dropdown">
+<a href="#">
+<i class="fa-regular fa-comment sidebar-menu-item-icon"></i>
+Ai
+<i class="ri-arrow-down-s-line sidebar-menu-item-accordion ms-auto"></i>
+</a>
+<ul class="sidebar-dropdown-menu">
+<li class="sidebar-dropdown-menu-item">
+<a href="https://ikannnew.vercel.app/api/viooai?q=hello">
+Vioo Ai
+</a>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="sidebar-overlay"></div>
+<!-- end: Sidebar -->
+
+<!-- start: Main -->
+<main class="bg-light">
+<div class="p-2">
+<!-- start: Navbar -->
+<nav class="px-3 py-2 bg-white rounded shadow-sm">
+<i class="ri-menu-line sidebar-toggle me-3 d-block d-md-none"></i>
+<h5 class="fw-bold mb-0 me-auto">Dashboard</h5>
+</nav>
+<!-- end: Navbar -->
+
+<!-- start: Content -->
+<div class="py-4">
+<!-- start: Summary -->
+<div class="row g-3">
+<div class="col-12 col-sm-6 col-lg-3">
+<a href="#"
+class="text-dark text-decoration-none bg-white p-3 rounded shadow-sm d-flex justify-content-between summary-primary">
+<div>
+<i class="fa-regular fa-user summary-icon bg-primary mb-2"></i>
+<div>Visitor</div>
+</div>
+<h4 id="visitor-count">Memuat...</h4>
+</a>
+</div>
+</div>
+</div>
+<!-- end: Content -->
+</div>
+</main>
+<!-- end: Main -->
+
+<!-- start: JS -->
+<script src="./assets/js/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.8.0/chart.min.js" integrity="sha512-sW/w8s4RWTdFFSduOTGtk4isV1+190E/GghVffMA9XczdJ2MDzSzLEubKAs5h0wzgSJOQTRYyaz73L3d6RtJSg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="./assets/js/bootstrap.bundle.min.js"></script>
+<script src="./assets/js/script.js"></script>
+<script src="./assets/js/visitor.js"></script>
+<!-- end: JS -->
+</body>
+
+</html>
