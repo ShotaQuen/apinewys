@@ -3,7 +3,8 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 const axios = require('axios')
-const { autogempa, gempaterkini, gempadirasakan } = require("./scrape");
+const { autogempa, gempaterkini, gempadirasakan } = require("./scrape")
+const mongoose = require('mongoose')
 
 var app = express();
 app.enable("trust proxy");
