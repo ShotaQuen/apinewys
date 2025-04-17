@@ -1,20 +1,43 @@
-var express = require("express"), cors = require("cors"), secure = require("ssl-express-www");
+require('dotenv').config();
+const express = require("express");
+const cors = require("cors");
+const secure = require("ssl-express-www");
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
-const axios = require('axios')
-const { autogempa, gempaterkini, gempadirasakan } = require("./scrape")
-const mongoose = require('mongoose')
+const axios = require('axios');
+const mongoose = require('mongoose');
+const { autogempa, gempaterkini, gempadirasakan } = require("./scrape");
 
-var app = express();
+const app = express();
 app.enable("trust proxy");
 app.set("json spaces", 2);
 app.use(cors());
 app.use(secure);
-const port = 3000;
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+const port = process.env.PORT || 3000;
+
+// MongoDB Connection
+const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://ikann:7xwYpL-wWR2PaGT@ikann.m1hmeuk.mongodb.net/?retryWrites=true&w=majority&appName=Ikann';
+
+mongoose.connect(mongoURI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB connection error:', err));
+
+// Visitor Schema
+const visitorSchema = new mongoose.Schema({
+  count: { type: Number, default: 0 },
+});
+const Visitor = mongoose.model('Visitor', visitorSchema);
+
+// Routes
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname,  'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.get('/stats', (req, res) => {
@@ -28,535 +51,147 @@ app.get('/stats', (req, res) => {
     numCores: os.cpus().length,
     loadAverage: os.loadavg(),
     hostname: os.hostname(),
-    networkInterfaces: os.networkInterfaces(),
     osType: os.type(),
     osRelease: os.release(),
-    userInfo: os.userInfo(),
     processId: process.pid,
     nodeVersion: process.version,
-    execPath: process.execPath,
-    cwd: process.cwd(),
     memoryUsage: process.memoryUsage()
   };
   res.json(stats);
 });
 
-// === Status
-const mongoURI = 'mongodb+srv://ikann:7xwYpL-wWR2PaGT@ikann.m1hmeuk.mongodb.net/?retryWrites=true&w=majority&appName=Ikann';
-
-// Schema & Model Visitor
-const visitorSchema = new mongoose.Schema({
-  count: { type: Number, default: 0 },
-});
-
-const Visitor = mongoose.model('Visitor', visitorSchema);
-
-// Koneksi MongoDB
-mongoose.connect(mongoURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.error('MongoDB connection error:', err));
-
-// API Route
 app.get('/api/visitor', async (req, res) => {
   try {
     let visitor = await Visitor.findOne();
-
-    if (!visitor) {
-      visitor = new Visitor({ count: 1 });
-    } else {
-      visitor.count += 1;
-    }
-
+    if (!visitor) visitor = new Visitor({ count: 1 });
+    else visitor.count += 1;
     await visitor.save();
-
     res.json({ count: visitor.count });
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
+// API Endpoints
+const apiRoutes = [
+  { path: '/api/lahelu', query: 'q', func: 'laheluSearch' },
+  { path: '/api/sfileSearch', query: 'q', func: 'sfileSearch' },
+  { path: '/api/modcombo', query: 'q', func: 'mod' },
+  { path: '/api/jadwalsholat', query: 'q', func: 'JadwalSholat.byCity' },
+  { path: '/api/happymod', query: 'q', func: 'happymod' },
+  { path: '/api/anime', query: 'q', func: 'anime' },
+  { path: '/api/githubSearch', query: 'q', func: 'githubSearch' },
+  { path: '/api/Apk4Free', query: 'q', func: 'Apk4Free' },
+  { path: '/api/pin', query: 'q', func: 'pin' },
+  { path: '/api/ttstalk', query: 'q', func: 'ttstalk' },
+  { path: '/api/npmStalk', query: 'q', func: 'npmStalk' },
+  { path: '/api/ffStalk', query: 'q', func: 'ffStalk.stalk' },
+  { path: '/api/mediafile', query: 'q', func: 'mediafire.stalk' },
+  { path: '/api/ssweb', query: 'q', func: 'ssweb' },
+  { path: '/api/viooai', query: 'q', func: 'viooai' },
+  { path: '/api/ytmp4', query: ['url', 'quality'], func: 'ytdl' },
+  { path: '/api/ytmp3', query: ['url', 'quality'], func: 'ytdl' },
+  { path: '/api/orkut/createpayment', query: ['amount', 'codeqr'], func: 'createPayment' },
+  { path: '/api/orkut/cekstatus', query: ['merchant', 'keyorkut'], func: 'cekStatus' }
+];
 
-// === Getaway
-app.get('/api/lahelu', async (req, res) => {
-  const { q } = req.query;
-
-  if (!q) {
-    return res.status(400).json({ status: false, error: "Query parameter 'q' is required" });
-  }
-
-  try {
-    const { laheluSearch } = require('./scrape')
-    const response = await laheluSearch(q);    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response
-    });
-  } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
-  }
-});
-
-app.get('/api/sfileSearch', async (req, res) => {
-  const { q } = req.query;
-
-  if (!q) {
-    return res.status(400).json({ status: false, error: "Query parameter 'q' is required" });
-  }
-
-  try {
-    const { sfileSearch } = require('./scrape')
-    const response = await sfileSearch(q);
-    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response
-    });
-  } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
-  }
-});
-
-app.get('/api/modcombo', async (req, res) => {
-  const { q } = req.query;
-
-  if (!q) {
-    return res.status(400).json({ status: false, error: "Query parameter 'q' is required" });
-  }
-
-  try {
-    const { mod } = require('./scrape')
-    const response = await mod(q);
-    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response
-    });
-  } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
-  }
-});
-
-app.get('/api/jadwalsholat', async (req, res) => {
-  const { q } = req.query;
-
-  if (!q) {
-    return res.status(400).json({ status: false, error: "Query parameter 'q' is required" });
-  }
-
-  try {
-    const { JadwalSholat } = require('./scrape')
-    const response = await JadwalSholat.byCity(q);
-    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response
-    });
-  } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
-  }
-});
-
-app.get('/api/happymod', async (req, res) => {
-  const { q } = req.query;
-
-  if (!q) {
-    return res.status(400).json({ status: false, error: "Query parameter 'q' is required" });
-  }
-
-  try {
-    const { happymod } = require('./scrape')
-    const response = await happymod(q);
-    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response
-    });
-  } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
-  }
-});
-
-app.get('/api/anime', async (req, res) => {
-  const { q } = req.query;
-
-  if (!q) {
-    return res.status(400).json({ status: false, error: "Query parameter 'q' is required" });
-  }
-
-  try {
-    const { anime } = require('./scrape')
-    const response = await anime(q);
-    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response
-    });
-  } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
-  }
-});
-
-app.get("/api/autogempa", async (req, res) => {
-    const data = await autogempa();
-    if (data) {
-        res.status(200).json({ status: true, creator: "ikann", data });
-    } else {
-        res.status(500).json({ status: false, error: "Gagal mengambil data gempa" });
+apiRoutes.forEach(route => {
+  app.get(route.path, async (req, res) => {
+    try {
+      const queries = Array.isArray(route.query) ?
+        route.query.map(q => req.query[q]) : [req.query[route.query]];
+      
+      if (queries.some(q => !q)) {
+        return res.status(400).json({
+          status: false,
+          error: `Query parameter${Array.isArray(route.query) ? 's' : ''} ${Array.isArray(route.query) ? route.query.join(', ') : route.query} ${Array.isArray(route.query) ? 'are' : 'is'} required`
+        });
+      }
+      
+      const {
+        [route.func.includes('.') ? route.func.split('.')[0] : route.func]: func } = require('./scrape');
+      const response = route.func.includes('.') ?
+        await func[route.func.split('.')[1]](...queries) :
+        await func(...queries);
+      
+      res.status(200).json({
+        status: true,
+        creator: 'ikann',
+        data: response
+      });
+    } catch (error) {
+      res.status(500).json({ status: false, error: error.message });
     }
+  });
+});
+
+// Special Routes
+app.get("/api/autogempa", async (req, res) => {
+  try {
+    const data = await autogempa();
+    res.status(200).json({ status: true, creator: "ikann", data });
+  } catch (error) {
+    res.status(500).json({ status: false, error: "Gagal mengambil data gempa" });
+  }
 });
 
 app.get("/api/gempaterkini", async (req, res) => {
+  try {
     const data = await gempaterkini();
-    if (data) {
-        res.status(200).json({ status: true, creator: "ikann", data });
-    } else {
-        res.status(500).json({ status: false, error: "Gagal mengambil data gempa" });
-    }
+    res.status(200).json({ status: true, creator: "ikann", data });
+  } catch (error) {
+    res.status(500).json({ status: false, error: "Gagal mengambil data gempa" });
+  }
 });
 
 app.get("/api/gempadirasakan", async (req, res) => {
+  try {
     const data = await gempadirasakan();
-    if (data) {
-        res.status(200).json({ status: true, creator: "ikann", data });
-    } else {
-        res.status(500).json({ status: false, error: "Gagal mengambil data gempa" });
-    }
-});
-
-app.get('/api/githubSearch', async (req, res) => {
-  const { q } = req.query;
-
-  if (!q) {
-    return res.status(400).json({ status: false, error: "Query parameter 'q' is required" });
-  }
-
-  try {
-    const { githubSearch } = require('./scrape')
-    const response = await githubSearch(q);    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response
-    });
+    res.status(200).json({ status: true, creator: "ikann", data });
   } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
+    res.status(500).json({ status: false, error: "Gagal mengambil data gempa" });
   }
 });
 
-app.get('/api/Apk4Free', async (req, res) => {
-  const { q } = req.query;
-
-  if (!q) {
-    return res.status(400).json({ status: false, error: "Query parameter 'q' is required" });
-  }
-
-  try {
-    const { Apk4Free } = require('./scrape')
-    const response = await Apk4Free(q);
-    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response
-    });
-  } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
-  }
-});
-
-app.get('/api/pin', async (req, res) => {
-  const { q } = req.query;
-  if (!q) {
-    return res.status(400).json({ status: false, error: "Query parameter 'q' is required" });
-  }
-
-  try {
-    const { pin } = require('./scrape')
-    const response = await pin(q);
-    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response
-    });
-  } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
-  }
-});
-
-app.get('/api/ttstalk', async (req, res) => {
-  const { q } = req.query;
-  if (!q) {
-    return res.status(400).json({ status: false, error: "Query parameter 'q' is required" });
-  }
-  try {
-    const { ttstalk } = require('./scrape')
-    const response = await ttstalk(q);    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response
-    });
-  } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
-  }
-});
-
-app.get('/api/npmStalk', async (req, res) => {
-  const { q } = req.query;
-
-  if (!q) {
-    return res.status(400).json({ status: false, error: "Query parameter 'q' is required" });
-  }
-
-  try {
-    const { npmStalk } = require('./scrape')
-    const response = await npmStalk(q);    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response
-    });
-  } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
-  }
-});
-
-app.get('/api/ffStalk', async (req, res) => {
-  const { q } = req.query;
-  if (!q) {
-    return res.status(400).json({ status: false, error: "Query parameter 'q' is required" });
-  }
-  try {
-    const { ffStalk } = require('./scrape')
-    const response = await ffStalk.stalk(q);
-    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response
-    });
-  } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
-  }
-});
-
-app.get('/api/mediafile', async (req, res) => {
-  const { q } = req.query;
-  if (!q) {
-    return res.status(400).json({ status: false, error: "Query parameter 'q' is required" });
-  }
-  try {
-    const { mediafire } = require('./scrape')
-    const response = await mediafire.stalk(q);
-    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response
-    });
-  } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
-  }
-});
-
-app.get('/api/ssweb', async (req, res) => {
-  const { q } = req.query;
-  if (!q) {
-    return res.status(400).json({ status: false, error: "Query parameter 'q' is required" });
-  }
-  try {
-    const { ssweb } = require('./scrape')
-    const response = await ssweb(q);
-    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response
-    });
-  } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
-  }
-});
-
-app.get('/api/viooai', async (req, res) => {
-  const { q } = req.query;
-
-  if (!q) {
-    return res.status(400).json({ status: false, error: "Query parameter 'q' is required" });
-  }
-
-  try {
-    const { viooai } = require('./scrape')
-    const response = await viooai(q);    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response
-    });
-  } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
-  }
-});
-
-app.get('/api/ytmp4', async (req, res) => {
-  const { url, quality } = req.query;
-
-  if (!url) {
-    return res.status(400).json({ status: false, error: "Tolong masukkan url YouTube" });
-  }
-  if (!quality) {
-    return res.status(400).json({ status: false, error: "Tolong masukkan url quality" });
-  }
-
-  try {
-    const { ytdl } = require('./scrape')
-    const response = await ytdl(url, 'mp4', quality);    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response
-    });
-  } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
-  }
-});
-
-app.get('/api/ytmp3', async (req, res) => {
-  const { url, quality } = req.query;
-
-  if (!url) {
-    return res.status(400).json({ status: false, error: "Tolong masukkan url YouTube" });
-  }
-  if (!quality) {
-    return res.status(400).json({ status: false, error: "Tolong masukkan url quality" });
-  }
-
-  try {
-    const { ytdl } = require('./scrape')
-    const response = await ytdl(url, 'mp3', quality);
-    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response
-    });
-  } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
-  }
-});
-
-app.get('/api/orkut/createpayment', async (req, res) => {
-  const { amount, codeqr } = req.query;
-
-  if (!amount) {
-    return res.status(400).json({ status: false, error: "Tolong masukkan harganya" });
-  }
-  if (!codeqr) {
-    return res.status(400).json({ status: false, error: "Tolong masukkan codeqr" });
-  }
-
-  try {
-    const { createPayment } = require('./scrape')
-    const response = await createPayment(amount, codeqr);    
-    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response.result
-    });
-  } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
-  }
-});
-
-app.get('/api/orkut/cekstatus', async (req, res) => {
-  const { merchant, keyorkut } = req.query;
-
-  if (!merchant) {
-    return res.status(400).json({ status: false, error: "Tolong masukkan merchant" });
-  }
-  if (!keyorkut) {
-    return res.status(400).json({ status: false, error: "Tolong masukkan keyorkut" });
-  }
-
-  try {
-    const { cekStatus } = require('./scrape')
-    const response = await cekStatus(merchant, keyorkut);    
-    res.status(200).json({
-      status: true,
-      creator: 'ikann',
-      data: response.result
-    });
-  } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
-  }
-});
-
+// Islam Routes
 app.get('/api/islam/surah', async (req, res) => {
-    try {
-        const listSurat = await axios.get('https://api.npoint.io/99c279bb173a6e28359c/data');
-
-        res.status(200).json({
-            status: true,
-            creator: 'ikann',
-            data: listSurat.data
-        });
-    } catch (error) {
-        res.status(500).json({
-            status: false,
-            creator: 'ikann',
-            message: "Server sedang error :("
-        });
-    }
+  try {
+    const listSurat = await axios.get('https://api.npoint.io/99c279bb173a6e28359c/data');
+    res.status(200).json({ status: true, creator: 'ikann', data: listSurat.data });
+  } catch (error) {
+    res.status(500).json({ status: false, creator: 'ikann', message: "Server sedang error :(" });
+  }
 });
 
 app.get('/api/islam/nosurat', async (req, res) => {
-    const { q } = req.query
+  try {
+    const { q } = req.query;
     if (q >= 115) {
-        return res.status(404).json({
-            status: false,
-            creator: 'ikann',
-            message: "Al-Qur'an hanya sampai 114 surah"
-        });
+      return res.status(404).json({ status: false, creator: 'ikann', message: "Al-Qur'an hanya sampai 114 surah" });
     }
-
-    try {
-        const surat = await axios.get(`https://api.npoint.io/99c279bb173a6e28359c/surat/${q}`);
-        res.status(200).json({
-            status: true,
-            creator: 'ikann',
-            data: surat.data
-        });
-    } catch (error) {
-        res.status(500).json({
-            status: false,
-            creator: 'ikann',
-            message: "Server sedang error :("
-        });
-    }
+    const surat = await axios.get(`https://api.npoint.io/99c279bb173a6e28359c/surat/${q}`);
+    res.status(200).json({ status: true, creator: 'ikann', data: surat.data });
+  } catch (error) {
+    res.status(500).json({ status: false, creator: 'ikann', message: "Server sedang error :(" });
+  }
 });
 
 app.get('/api/islam/namasurat', async (req, res) => {
-    try {
-        const { q } = req.query
-        const listSurat = await axios.get('https://api.npoint.io/99c279bb173a6e28359c/data');
-        const findSurah = listSurat.data.find(surah => surah.nama === q);
-
-        if (!findSurah) {
-            return res.status(404).json({
-                status: false,
-                creator: 'ikann',
-                message: "Surah tidak ditemukan"
-            });
-        }
-
-        res.status(200).json({
-            status: true,
-            creator: 'ikann',
-            data: findSurah
-        });
-    } catch (error) {
-        res.status(500).json({
-            status: false,
-            creator: 'ikann',
-            message: "Server sedang error :("
-        });
+  try {
+    const { q } = req.query;
+    const listSurat = await axios.get('https://api.npoint.io/99c279bb173a6e28359c/data');
+    const findSurah = listSurat.data.find(surah => surah.nama === q);
+    if (!findSurah) {
+      return res.status(404).json({ status: false, creator: 'ikann', message: "Surah tidak ditemukan" });
     }
+    res.status(200).json({ status: true, creator: 'ikann', data: findSurah });
+  } catch (error) {
+    res.status(500).json({ status: false, creator: 'ikann', message: "Server sedang error :(" });
+  }
 });
 
-app.use((req, res, next) => {
+// Error Handling
+app.use((req, res) => {
   res.status(404).send("Halaman tidak ditemukan");
 });
 
@@ -565,16 +200,9 @@ app.use((err, req, res, next) => {
   res.status(500).send('Ada kesalahan pada server');
 });
 
-
-app.use((req, res, next) => {
-  res.status(404).send("Halaman tidak ditemukan");
-});
-
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Ada kesalahan pada server');
-});
-
+// Server Start
 app.listen(port, () => {
   console.log(`Server berjalan di http://localhost:${port}`);
 });
+
+module.exports = app;
