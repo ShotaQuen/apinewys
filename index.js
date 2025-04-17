@@ -41,26 +41,40 @@ app.get('/stats', (req, res) => {
 });
 
 // === Status
-const visitorPath = path.join(__dirname, './data/visitor.json');
+const mongoURI = 'mongodb+srv://ikann:7xwYpL-wWR2PaGT@ikann.m1hmeuk.mongodb.net/?retryWrites=true&w=majority&appName=Ikann';
 
-app.get('/status/visitor', (req, res) => {
-  fs.readFile(visitorPath, (err, data) => {
-    if (err) return res.status(500).json({ error: 'Gagal membaca file' });
+// Schema & Model Visitor
+const visitorSchema = new mongoose.Schema({
+  count: { type: Number, default: 0 },
+});
 
-    let visitor;
-    try {
-      visitor = JSON.parse(data);
-    } catch (e) {
-      return res.status(500).json({ error: 'Format JSON salah' });
+const Visitor = mongoose.model('Visitor', visitorSchema);
+
+// Koneksi MongoDB
+mongoose.connect(mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log('MongoDB connected'))
+.catch(err => console.error('MongoDB connection error:', err));
+
+// API Route
+app.get('/api/visitor', async (req, res) => {
+  try {
+    let visitor = await Visitor.findOne();
+
+    if (!visitor) {
+      visitor = new Visitor({ count: 1 });
+    } else {
+      visitor.count += 1;
     }
 
-    visitor.total += 1;
+    await visitor.save();
 
-    fs.writeFile(visitorPath, JSON.stringify(visitor, null, 2), (err) => {
-      if (err) return res.status(500).json({ error: 'Gagal menyimpan file' });
-      res.json({ message: 'Visitor counted', totalVisitors: visitor.total });
-    });
-  });
+    res.json({ count: visitor.count });
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 

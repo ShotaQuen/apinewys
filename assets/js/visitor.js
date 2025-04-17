@@ -1,4 +1,4 @@
-fetch('/status/visitor')
+fetch('/api/visitor')
     .then(response => response.json())
     .then(data => {
       const count = data.totalVisitors;
