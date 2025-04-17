@@ -1,4 +1,4 @@
-fetch('http://ikannnew.vercel.app/status/visitor')
+fetch('/status/visitor')
     .then(response => response.json())
     .then(data => {
       const count = data.totalVisitors;
