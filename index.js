@@ -12,8 +12,6 @@ app.use(cors());
 app.use(secure);
 const port = 3000;
 
-app.use('/assets', express.static(path.join(__dirname, 'assets')));
-
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname,  'index.html'));
 });
@@ -43,19 +41,28 @@ app.get('/stats', (req, res) => {
 });
 
 // === Status
-app.get('/status/visitor', (req, res) => {
-  fs.readFile('./data/visitor.json', (err, data) => {
-    if (err) return res.status(500).json({ error: 'Failed to read file' });
+const visitorPath = path.join(__dirname, './data/visitor.json');
 
-    let visitor = JSON.parse(data);
+app.get('/status/visitor', (req, res) => {
+  fs.readFile(visitorPath, (err, data) => {
+    if (err) return res.status(500).json({ error: 'Gagal membaca file' });
+
+    let visitor;
+    try {
+      visitor = JSON.parse(data);
+    } catch (e) {
+      return res.status(500).json({ error: 'Format JSON salah' });
+    }
+
     visitor.total += 1;
 
-    fs.writeFile('./data/visitor.json', JSON.stringify(visitor), err => {
-      if (err) return res.status(500).json({ error: 'Failed to update visitor count' });
+    fs.writeFile(visitorPath, JSON.stringify(visitor, null, 2), (err) => {
+      if (err) return res.status(500).json({ error: 'Gagal menyimpan file' });
       res.json({ message: 'Visitor counted', totalVisitors: visitor.total });
     });
   });
 });
+
 
 // === Getaway
 app.get('/api/lahelu', async (req, res) => {
