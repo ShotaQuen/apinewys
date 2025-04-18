@@ -19,22 +19,6 @@ app.use(express.urlencoded({ extended: true }));
 
 const port = process.env.PORT || 3000;
 
-// MongoDB Connection
-const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://ikann:7xwYpL-wWR2PaGT@ikann.m1hmeuk.mongodb.net/?retryWrites=true&w=majority&appName=Ikann';
-
-mongoose.connect(mongoURI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
-
-// Visitor Schema
-const visitorSchema = new mongoose.Schema({
-  count: { type: Number, default: 0 },
-});
-const Visitor = mongoose.model('Visitor', visitorSchema);
-
 // Routes
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
@@ -60,11 +44,28 @@ app.get('/stats', (req, res) => {
   res.json(stats);
 });
 
-app.get('/api/visitor', async (req, res) => {
+mongoose.connect('mongodb+srv://ikann:7xwYpL-wWR2PaGT@ikann.m1hmeuk.mongodb.net/?retryWrites=true&w=majority&appName=Ikann', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).then(() => console.log('MongoDB connected'))
+  .catch(err => console.error(err));
+
+// Schema & Model
+const visitorSchema = new mongoose.Schema({
+  count: { type: Number, default: 0 }
+});
+const Visitor = mongoose.model('Visitor', visitorSchema);
+
+// API Endpoint
+app.get('/api/visit', async (req, res) => {
   try {
     let visitor = await Visitor.findOne();
-    if (!visitor) visitor = new Visitor({ count: 1 });
-    else visitor.count += 1;
+    if (!visitor) {
+      visitor = new Visitor({ count: 1 });
+    } else {
+      visitor.count += 1;
+    }
+
     await visitor.save();
     res.json({ count: visitor.count });
   } catch (err) {
