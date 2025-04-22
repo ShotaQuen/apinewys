@@ -64,7 +64,7 @@ const apiRoutes = [
   { path: '/api/ytmp4', query: ['url', 'quality'], func: 'ytdl' },
   { path: '/api/ytmp3', query: ['url', 'quality'], func: 'ytdl' },
   { path: '/api/orkut/createpayment', query: ['amount', 'codeqr'], func: 'createPayment' },
-  { path: '/api/orkut/cekstatus', query: ['merchant', 'keyorkut'], func: 'cekStatus' }
+  { path: '/api/orkut/cekstatus', query: ['merchant', 'keyorkut'], func: 'cekStatus' }, 
 ];
 
 apiRoutes.forEach(route => {
@@ -159,111 +159,6 @@ app.get('/api/islam/namasurat', async (req, res) => {
     res.status(200).json({ status: true, creator: 'ikann', data: findSurah });
   } catch (error) {
     res.status(500).json({ status: false, creator: 'ikann', message: "Server sedang error :(" });
-  }
-});
-
-const helmet = require('helmet'); // Tambahan untuk keamanan
-const rateLimit = require('express-rate-limit'); // Tambahan untuk rate limiting
-
-const app = express();
-
-// Middleware dasar
-app.use(express.json());
-app.use(helmet()); // Menambahkan header keamanan
-
-// Rate limiting untuk API
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 menit
-  max: 100 // limit setiap IP ke 100 request per windowMs
-});
-app.use('/stats/', limiter);
-
-// Koneksi MongoDB dengan error handling yang lebih baik
-mongoose.connect('mongodb://localhost:27017/visitorDB', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000 // Timeout setelah 5 detik jika tidak bisa connect
-})
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => {
-  console.error('MongoDB connection error:', err);
-  process.exit(1); // Keluar jika tidak bisa connect ke MongoDB
-});
-
-// Skema Visitor yang diperluas
-const visitorSchema = new mongoose.Schema({
-  ip: { type: String, required: true },
-  userAgent: String,
-  referrer: String,
-  path: String,
-  visitDate: { type: Date, default: Date.now, index: true }, // Ditambahkan index
-  isUnique: { type: Boolean, default: true }
-});
-
-// Index untuk performa query
-visitorSchema.index({ ip: 1, visitDate: 1 });
-
-// Middleware pre-save untuk mengecek visitor unik
-visitorSchema.pre('save', async function(next) {
-  const existing = await Visitor.findOne({ 
-    ip: this.ip,
-    visitDate: { 
-      $gte: new Date(new Date() - 24 * 60 * 60 * 1000) // 24 jam terakhir
-    }
-  });
-  
-  if (existing) {
-    this.isUnique = false;
-  }
-  next();
-});
-
-const Visitor = mongoose.model('Visitor', visitorSchema);
-
-// Middleware untuk tracking visitor yang lebih robust
-app.use(async (req, res, next) => {
-  try {
-    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
-               req.ip || 
-               req.socket.remoteAddress;
-    
-    const userAgent = req.headers['user-agent'];
-    const referrer = req.headers['referer'] || req.headers['referrer'];
-    const path = req.originalUrl;
-
-    await Visitor.create({ 
-      ip, 
-      userAgent, 
-      referrer, 
-      path 
-    });
-
-    next();
-  } catch (err) {
-    console.error('Visitor logging failed:', err);
-    next();
-  }
-});
-
-// Endpoint statistik visitor yang lebih lengkap
-app.get('/stats/visitors', async (req, res) => {
-  try {
-    const [total, unique, today] = await Promise.all([
-      Visitor.countDocuments(),
-      Visitor.countDocuments({ isUnique: true }),
-      Visitor.countDocuments({ 
-        visitDate: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
-      })
-    ]);
-    
-    res.json({ 
-      totalVisitors: total,
-      uniqueVisitors: unique,
-      visitorsToday: today
-    });
-  } catch (err) {
-    console.error('Error fetching stats:', err);
-    res.status(500).json({ error: 'Failed to fetch visitor stats' });
   }
 });
 
