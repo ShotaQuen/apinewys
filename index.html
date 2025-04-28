@@ -13,18 +13,51 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ShotaQuen/cdn/assets/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ShotaQuen/cdn/assets/css/style.css">
 <!-- end: CSS -->
-<title>IkannNew</title>
+<title>IkannNew - Dark Mode</title>
 <style>
-  .purple { background: #9b59b6; }
+  body {
+    background-color: #0d1117;
+    color: #c9d1d9;
+  }
+  .bg-main-dark {
+    background-color: #161b22;
+  }
+  .bg-secondary-dark {
+    background-color: #21262d;
+  }
+  .text-muted {
+    color: #8b949e !important;
+  }
+  .sidebar {
+    background-color: #161b22;
+    border-right: 1px solid #30363d;
+  }
+  .sidebar-menu-item a, .sidebar-logo {
+    color: #c9d1d9 !important;
+  }
+  nav, .card, .statistik-card, .latest-usage-card {
+    background-color: #161b22;
+    border-radius: 12px;
+  }
+  .badge {
+    background-color: #21262d;
+    color: #58a6ff;
+  }
+  
+  .sidebar-menu-item a:hover {
+  background-color: #21262d; /* Gelap bukan putih */
+  color: #58a6ff; /* Biar ada sedikit efek biru di teks */
+  border-radius: 8px;
+  }
 </style>
 </head>
 
 <body>
 
 <!-- start: Sidebar -->
-<div class="sidebar position-fixed top-0 bottom-0 bg-white border-end">
+<div class="sidebar position-fixed top-0 bottom-0">
 <div class="d-flex align-items-center p-3">
-<a href="#" class="sidebar-logo text-uppercase fw-bold text-decoration-none text-indigo fs-4">Ikann</a>
+<a href="#" class="sidebar-logo text-uppercase fw-bold text-decoration-none fs-4">Ikann</a>
 <i class="sidebar-toggle ri-arrow-left-circle-line ms-auto fs-5 d-none d-md-block"></i>
 </div>
 <ul class="sidebar-menu p-3 m-0 mb-0">
@@ -55,10 +88,10 @@ Vioo Ai
 <!-- end: Sidebar -->
 
 <!-- start: Main -->
-<main class="bg-light">
+<main style="background-color: #0d1117;">
 <div class="p-2">
 <!-- start: Navbar -->
-<nav class="px-3 py-2 bg-white rounded shadow-sm">
+<nav class="px-3 py-2 bg-main-dark rounded shadow-sm">
 <i class="ri-menu-line sidebar-toggle me-3 d-block d-md-none"></i>
 <h5 class="fw-bold mb-0 me-auto">Dashboard</h5>
 </nav>
@@ -66,18 +99,15 @@ Vioo Ai
 
 <!-- start: Content -->
 <div class="py-4">
-<!-- start: Summary -->
-<div class="row g-3">
-</div>
 <!-- start: Statistik Card -->
 <div class="row g-3 mb-4">
   <div class="col-12">
-    <div class="bg-white rounded shadow-sm p-3">
+    <div class="bg-main-dark rounded shadow-sm p-3">
       <h5 class="fw-bold">Statistik</h5>
       <p class="text-muted mb-4">Request statistik for this API</p>
       <div class="row g-3">
         <div class="col-6 col-md-3">
-          <div class="d-flex align-items-center bg-light rounded p-3">
+          <div class="d-flex align-items-center bg-secondary-dark rounded p-3">
             <i class="ri-pie-chart-line fs-4 text-white purple p-2 rounded me-3"></i>
             <div>
               <div class="text-muted small">Request</div>
@@ -86,7 +116,7 @@ Vioo Ai
           </div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="d-flex align-items-center bg-light rounded p-3">
+          <div class="d-flex align-items-center bg-secondary-dark rounded p-3">
             <i class="ri-user-line fs-4 text-white bg-info p-2 rounded me-3"></i>
             <div>
               <div class="text-muted small">Visitor</div>
@@ -95,7 +125,7 @@ Vioo Ai
           </div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="d-flex align-items-center bg-light rounded p-3">
+          <div class="d-flex align-items-center bg-secondary-dark rounded p-3">
             <i class="ri-checkbox-circle-line fs-4 text-white bg-success p-2 rounded me-3"></i>
             <div>
               <div class="text-muted small">Success</div>
@@ -104,7 +134,7 @@ Vioo Ai
           </div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="d-flex align-items-center bg-light rounded p-3">
+          <div class="d-flex align-items-center bg-secondary-dark rounded p-3">
             <i class="ri-bug-line fs-4 text-white bg-danger p-2 rounded me-3"></i>
             <div>
               <div class="text-muted small">Failed</div>
@@ -119,7 +149,7 @@ Vioo Ai
 <!-- end: Statistik Card -->
 
 <!-- start: Latest Usage Card -->
-<div class="bg-white rounded shadow-sm p-3">
+<div class="bg-main-dark rounded shadow-sm p-3">
   <h5 class="fw-bold mb-3">Latest Usage</h5>
   <div class="d-flex align-items-start mb-4">
     <div class="bg-success text-white rounded p-2 me-3">
@@ -128,49 +158,10 @@ Vioo Ai
     <div>
       <div class="fw-semibold">Tebak Hero</div>
       <div class="text-muted small">17/04/2025 12:56:51</div>
-      <span class="badge bg-light text-success mt-1">windows</span>
+      <span class="badge mt-1">windows</span>
     </div>
   </div>
-  <div class="d-flex align-items-start mb-4">
-    <div class="bg-success text-white rounded p-2 me-3">
-      <i class="ri-checkbox-circle-line"></i>
-    </div>
-    <div>
-      <div class="fw-semibold">Google Image</div>
-      <div class="text-muted small">17/04/2025 12:56:54</div>
-      <span class="badge bg-light text-success mt-1">axios</span>
-    </div>
-  </div>
-  <div class="d-flex align-items-start mb-4">
-    <div class="bg-success text-white rounded p-2 me-3">
-      <i class="ri-checkbox-circle-line"></i>
-    </div>
-    <div>
-      <div class="fw-semibold">Tebak Hero</div>
-      <div class="text-muted small">17/04/2025 12:57:00</div>
-      <span class="badge bg-light text-success mt-1">windows</span>
-    </div>
-  </div>
-  <div class="d-flex align-items-start mb-4">
-    <div class="bg-success text-white rounded p-2 me-3">
-      <i class="ri-checkbox-circle-line"></i>
-    </div>
-    <div>
-      <div class="fw-semibold">Tebak Hero</div>
-      <div class="text-muted small">17/04/2025 12:57:07</div>
-      <span class="badge bg-light text-success mt-1">windows</span>
-    </div>
-  </div>
-  <div class="d-flex align-items-start">
-    <div class="bg-success text-white rounded p-2 me-3">
-      <i class="ri-checkbox-circle-line"></i>
-    </div>
-    <div>
-      <div class="fw-semibold">Play MP3</div>
-      <div class="text-muted small">17/04/2025 12:57:08</div>
-      <span class="badge bg-light text-success mt-1">windows</span>
-    </div>
-  </div>
+  <!-- Tambahkan list lain sama format -->
 </div>
 <!-- end: Latest Usage Card -->
 
