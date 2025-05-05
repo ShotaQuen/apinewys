@@ -44,60 +44,58 @@ app.get('/stats', (req, res) => {
   res.json(stats);
 });
 
-// API Endpoints
-const apiRoutes = [
-  { path: '/api/lahelu', query: 'q', func: 'laheluSearch' },
-  { path: '/api/sfileSearch', query: 'q', func: 'sfileSearch' },
-  { path: '/api/modcombo', query: 'q', func: 'mod' },
-  { path: '/api/jadwalsholat', query: 'q', func: 'JadwalSholat.byCity' },
-  { path: '/api/happymod', query: 'q', func: 'happymod' },
-  { path: '/api/anime', query: 'q', func: 'anime' },
-  { path: '/api/githubSearch', query: 'q', func: 'githubSearch' },
-  { path: '/api/Apk4Free', query: 'q', func: 'Apk4Free' },
-  { path: '/api/pin', query: 'q', func: 'pin' },
-  { path: '/api/ttstalk', query: 'q', func: 'ttstalk' },
-  { path: '/api/npmStalk', query: 'q', func: 'npmStalk' },
-  { path: '/api/ffStalk', query: 'q', func: 'ffStalk.stalk' },
-  { path: '/api/mediafile', query: 'q', func: 'mediafire.stalk' },
-  { path: '/api/ssweb', query: 'q', func: 'ssweb' },
-  { path: '/api/viooai', query: 'q', func: 'viooai' },
-  { path: '/api/ytmp4', query: ['url', 'quality'], func: 'ytdl' },
-  { path: '/api/ytmp3', query: ['url', 'quality'], func: 'ytdl' },
-  { path: '/api/orkut/createpayment', query: ['amount', 'codeqr'], func: 'createPayment' },
-  { path: '/api/orkut/cekstatus', query: ['merchant', 'keyorkut'], func: 'cekStatus' }, 
-];
+// Special Routes
+const errorLogFile = path.join(__dirname, "public", "latest-error.txt");
 
-apiRoutes.forEach(route => {
-  app.get(route.path, async (req, res) => {
-    try {
-      const queries = Array.isArray(route.query) ?
-        route.query.map(q => req.query[q]) : [req.query[route.query]];
-      
-      if (queries.some(q => !q)) {
-        return res.status(400).json({
-          status: false,
-          error: `Query parameter${Array.isArray(route.query) ? 's' : ''} ${Array.isArray(route.query) ? route.query.join(', ') : route.query} ${Array.isArray(route.query) ? 'are' : 'is'} required`
-        });
-      }
-      
-      const {
-        [route.func.includes('.') ? route.func.split('.')[0] : route.func]: func } = require('./scrape');
-      const response = route.func.includes('.') ?
-        await func[route.func.split('.')[1]](...queries) :
-        await func(...queries);
-      
-      res.status(200).json({
-        status: true,
-        creator: 'ikann',
-        data: response
-      });
-    } catch (error) {
-      res.status(500).json({ status: false, error: error.message });
+app.use(express.static("public")); // Folder untuk file HTML dan lainnya
+
+// Fungsi untuk menyimpan error ke file .txt
+function logErrorToFile(error) {
+  const log = `
+[${new Date().toLocaleString()}]
+Message: ${error.message}
+Stack:
+${error.stack}
+Platform: ${process.platform}
+------------------------------------
+`;
+  fs.writeFileSync(errorLogFile, log);
+}
+
+// Contoh route API yang bisa error
+app.get("/api/test", (req, res) => {
+  // Simulasi error
+  throw new Error("Simulasi error dari /api/test");
+});
+
+// API untuk ambil error terakhir
+app.get("/api/latest-error", (req, res) => {
+  fs.readFile(errorLogFile, "utf8", (err, data) => {
+    if (err) {
+      return res.status(404).send("Tidak ada error terbaru");
     }
+    res.type("text").send(data);
   });
 });
 
-// Special Routes
+// Middleware untuk menangkap error dalam route
+app.use((err, req, res, next) => {
+  console.error("Middleware error:", err);
+  logErrorToFile(err);
+  res.status(500).send("Terjadi kesalahan pada server");
+});
+
+// Tangkap error global
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+  logErrorToFile(err);
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled Rejection:", reason);
+  logErrorToFile(reason instanceof Error ? reason : new Error(reason));
+})
+
 app.get("/api/autogempa", async (req, res) => {
   try {
     const data = await autogempa();

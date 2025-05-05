@@ -48,6 +48,7 @@
     color: #58a6ff;
     border-radius: 8px;
   }
+  .purple { background-color: #7b61ff; }
 </style>
 </head>
 
@@ -151,8 +152,8 @@
       <div class="bg-main-dark rounded shadow-sm p-3">
         <h5 class="fw-bold mb-3">Latest Usage</h5>
         <div class="d-flex align-items-start mb-4">
-          <div class="bg-success text-white rounded p-2 me-3">
-            <i class="ri-checkbox-circle-line"></i>
+          <div>
+            <i class="ri-checkbox-circle-line fs-4 text-white bg-success p-2 rounded me-3"></i>
           </div>
           <div>
             <div class="fw-semibold">Tebak Hero</div>
@@ -161,6 +162,21 @@
           </div>
         </div>
       </div>
+      
+            <div class="bg-main-dark rounded shadow-sm p-3 mt-4">
+  <h5 class="fw-bold mb-3">Latest Error</h5>
+  <div class="d-flex align-items-start mb-4">
+    <div>
+      <i class="ri-bug-line fs-4 text-white bg-danger p-2 rounded me-3"></i>
+    </div>
+    <div>
+      <div class="fw-semibold" id="error-message">Memuat error...</div>
+      <div class="text-muted small" id="error-time">-</div>
+      <span class="badge mt-1" id="error-platform">-</span>
+    </div>
+  </div>
+</div>
+      
       <!-- end: Latest Usage Card -->
     </div>
     <!-- end: Content -->
@@ -183,6 +199,23 @@
     .catch(err => {
       console.error("Gagal mengambil data visitor:", err);
     });
+    
+    fetch("/api/latest-error")
+  .then(res => res.text())
+  .then(text => {
+    // Ekstrak data dari format teks
+    const messageMatch = text.match(/Message:\s*(.+)/);
+    const timeMatch = text.match(/\[(.+?)\]/);
+    const platformMatch = text.match(/Platform:\s*(.+)/);
+
+    document.getElementById("error-message").textContent = messageMatch ? messageMatch[1] : "Tidak diketahui";
+    document.getElementById("error-time").textContent = timeMatch ? timeMatch[1] : "-";
+    document.getElementById("error-platform").textContent = platformMatch ? platformMatch[1] : "-";
+  })
+  .catch(err => {
+    document.getElementById("error-message").textContent = "Gagal memuat error";
+    console.error(err);
+  });
 </script>
 <!-- end: JS -->
 
