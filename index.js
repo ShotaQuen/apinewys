@@ -45,54 +45,65 @@ app.get('/stats', (req, res) => {
 });
 
 // Special Routes
-const errorLogFile = path.join(__dirname, "latest-error.txt");
+const mongoUrl = "mongodb+srv://ikannpt:AOAaYV7OVlJaEhpL@error.pfrzgfv.mongodb.net/?retryWrites=true&w=majority&appName=Error";
+const dbName = "errorLogs";
+let db;
 
-// Fungsi untuk menyimpan error ke file .txt
-function logErrorToFile(error) {
-  const log = `
-[${new Date().toLocaleString()}]
-Message: ${error.message}
-Stack:
-${error.stack}
-Platform: ${process.platform}
-------------------------------------
-`;
-  fs.writeFileSync(errorLogFile, log);
+// Koneksi ke MongoDB Atlas
+MongoClient.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(client => {
+    console.log("Terhubung ke MongoDB Atlas");
+    db = client.db(dbName);
+  })
+  .catch(err => console.error("Gagal konek MongoDB:", err));
+
+// Simpan error ke MongoDB
+function logErrorToMongo(error) {
+  if (!db) return;
+  const collection = db.collection("errors");
+  collection.insertOne({
+    message: error.message,
+    stack: error.stack,
+    platform: process.platform,
+    timestamp: new Date()
+  });
 }
 
-// Contoh route API yang bisa error
+// Simulasi error
 app.get("/api/test", (req, res) => {
-  // Simulasi error
   throw new Error("Simulasi error dari /api/test");
 });
 
-// API untuk ambil error terakhir
-app.get("/api/latest-error", (req, res) => {
-  fs.readFile(errorLogFile, "utf8", (err, data) => {
-    if (err) {
-      return res.status(404).send("Tidak ada error terbaru");
-    }
-    res.type("text").send(data);
-  });
+// API untuk ambil error terbaru
+app.get("/api/latest-error", async (req, res) => {
+  try {
+    const latest = await db.collection("errors")
+      .find().sort({ timestamp: -1 }).limit(1).toArray();
+
+    if (!latest.length) return res.status(404).send("Tidak ada error");
+
+    const err = latest[0];
+    const responseText = `
+[${new Date(err.timestamp).toLocaleString()}]
+Message: ${err.message}
+Stack:
+${err.stack}
+Platform: ${err.platform}
+------------------------------------
+`;
+    res.type("text").send(responseText);
+  } catch (err) {
+    console.error("Error ambil dari DB:", err);
+    res.status(500).send("Gagal membaca dari database");
+  }
 });
 
-// Middleware untuk menangkap error dalam route
+// Middleware error global
 app.use((err, req, res, next) => {
-  console.error("Middleware error:", err);
-  logErrorToFile(err);
-  res.status(500).send("Terjadi kesalahan pada server");
+  console.error("Terjadi error:", err);
+  logErrorToMongo(err);
+  res.status(500).send("Server error");
 });
-
-// Tangkap error global
-process.on("uncaughtException", (err) => {
-  console.error("Uncaught Exception:", err);
-  logErrorToFile(err);
-});
-
-process.on("unhandledRejection", (reason) => {
-  console.error("Unhandled Rejection:", reason);
-  logErrorToFile(reason instanceof Error ? reason : new Error(reason));
-})
 
 app.get("/api/autogempa", async (req, res) => {
   try {
