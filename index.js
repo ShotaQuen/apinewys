@@ -7,6 +7,7 @@ const os = require('os');
 const fs = require('fs');
 const axios = require('axios');
 const mongoose = require('mongoose');
+mongoose.set('strictQuery', false);
 const { autogempa, gempaterkini, gempadirasakan } = require("./scrape");
 
 const app = express();
@@ -50,23 +51,21 @@ const dbName = "errorLogs";
 let db;
 
 // Koneksi ke MongoDB Atlas
-MongoClient.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(client => {
-    console.log("Terhubung ke MongoDB Atlas");
-    db = client.db(dbName);
-  })
+const mongoUrl = "mongodb+srv://ikannpt:AOAaYV7OVlJaEhpL@error.pfrzgfv.mongodb.net/?retryWrites=true&w=majority&appName=Error";
+
+// Koneksi ke MongoDB Atlas
+mongoose.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("Terhubung ke MongoDB Atlas via Mongoose"))
   .catch(err => console.error("Gagal konek MongoDB:", err));
 
 // Simpan error ke MongoDB
 function logErrorToMongo(error) {
-  if (!db) return;
-  const collection = db.collection("errors");
-  collection.insertOne({
+  const newError = new ErrorLog({
     message: error.message,
     stack: error.stack,
-    platform: process.platform,
-    timestamp: new Date()
+    platform: process.platform
   });
+  newError.save();
 }
 
 // Simulasi error
@@ -77,26 +76,23 @@ app.get("/api/test", (req, res) => {
 // API untuk ambil error terbaru
 app.get("/api/latest-error", async (req, res) => {
   try {
-    const latest = await db.collection("errors")
-      .find().sort({ timestamp: -1 }).limit(1).toArray();
+    const latest = await ErrorLog.findOne().sort({ timestamp: -1 });
+    if (!latest) return res.status(404).send("Tidak ada error");
 
-    if (!latest.length) return res.status(404).send("Tidak ada error");
-
-    const err = latest[0];
     const responseText = `
-[${new Date(err.timestamp).toLocaleString()}]
-Message: ${err.message}
+[${latest.timestamp.toLocaleString()}]
+Message: ${latest.message}
 Stack:
-${err.stack}
-Platform: ${err.platform}
+${latest.stack}
+Platform: ${latest.platform}
 ------------------------------------
 `;
     res.type("text").send(responseText);
   } catch (err) {
-    console.error("Error ambil dari DB:", err);
     res.status(500).send("Gagal membaca dari database");
   }
 });
+
 
 // Middleware error global
 app.use((err, req, res, next) => {
