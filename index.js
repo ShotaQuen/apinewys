@@ -45,9 +45,7 @@ app.get('/stats', (req, res) => {
 });
 
 // Special Routes
-const errorLogFile = path.join(__dirname, "public", "latest-error.txt");
-
-app.use(express.static("public")); // Folder untuk file HTML dan lainnya
+const errorLogFile = path.join(__dirname, "latest-error.txt");
 
 // Fungsi untuk menyimpan error ke file .txt
 function logErrorToFile(error) {
